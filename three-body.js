@@ -1,11 +1,14 @@
 $(document).ready(function(){
 
+    //jquery selector for dom element we're going to render to
+    var screen = "#screen";
+
     //size of display
-    var w = 600;
-    var h = 600;
+    var w = $(screen).width();
+    var h = $(screen).height();
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(w,h);
-    $("#screen").append( renderer.domElement );
+    $(screen).append( renderer.domElement );
     //start with center of mass focus selected
     $("#com").button('toggle');
 
@@ -18,7 +21,7 @@ $(document).ready(function(){
     //Allows you to look around whilst focusing on the center of mass (0,0,0)
     //http://mrdoob.github.com/three.js/examples/js/controls/OrbitControls.js
     //Argh where is the documentation for this?
-    var controls = new THREE.OrbitControls( camera , $("#screen")[0]);
+    var controls = new THREE.OrbitControls( camera , $(screen)[0]);
     controls.addEventListener('change', render);
 
     //light at the center of mass
