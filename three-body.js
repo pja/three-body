@@ -18,7 +18,7 @@ $(document).ready(function(){
     //Allows you to look around whilst focusing on the center of mass (0,0,0)
     //http://mrdoob.github.com/three.js/examples/js/controls/OrbitControls.js
     //Argh where is the documentation for this?
-    var controls = new THREE.OrbitControls( camera );
+    var controls = new THREE.OrbitControls( camera , $("#screen")[0]);
     controls.addEventListener('change', render);
 
     //light at the center of mass
