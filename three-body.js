@@ -18,9 +18,7 @@ $(document).ready(function(){
     camera.position.z = 2;
     camera.lookAt(new THREE.Vector3(0,0,0));
 
-    //Allows you to look around whilst focusing on the center of mass (0,0,0)
-    //http://mrdoob.github.com/three.js/examples/js/controls/OrbitControls.js
-    //Argh where is the documentation for this?
+    //Allows you to look around whilst focusing on a point
     var controls = new THREE.OrbitControls( camera , $(screen)[0]);
     controls.addEventListener('change', render);
 
