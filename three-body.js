@@ -2,6 +2,9 @@ $(document).ready(function(){
 
     //jquery selector for dom element we're going to render to
     var screen = "#screen";
+    if (!Detector.webgl){
+        $(screen).append(Detector.getWebGLErrorMessage());
+    }
 
     //size of display
     var w = $(screen).width();
