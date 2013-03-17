@@ -18,7 +18,7 @@ $(document).ready(function(){
     var scene = new THREE.Scene();
     //do I want perspective?
     var camera = new THREE.PerspectiveCamera( 60, w/h, 0.1, 30 );
-    camera.position.z = 2;
+    camera.position.z = 3;
     camera.lookAt(new THREE.Vector3(0,0,0));
 
     //Allows you to look around whilst focusing on a point
@@ -49,57 +49,32 @@ $(document).ready(function(){
     $("#simulationSelection").click(function(x){ 
         solution = x.target.id;
         reset(bodies, scene, solution);
-        camera.position.set(0,0,3);
     });
-    var currentFocus = -1;
+
+    bodies.currentFocus = -1;
     //focus point function
     $("#focusRadio").click(function(x){ 
         var newFocus = x.target.value;
-        if (currentFocus != newFocus){
-            currentFocus = newFocus;
+        if (bodies.currentFocus != newFocus){
+            bodies.currentFocus = newFocus;
             reset(bodies, scene, solution);
-            camera.position.set(0,0,3);
         }
     });
 
-    function move(){
-        for (var i = 0; i < bodies.speed; i++){
-            rk4(bodies);
-        }
-        step++;
-        //recenter on the focussed body
-        if (currentFocus != -1){
-            var adjustment = bodies[currentFocus].position.clone();
-            for (var i = 0; i < bodies.length; i++){
-                bodies[i].position.sub(adjustment);
-            }
-        }
 
-        for (var i = 0; i < bodies.length; i++){
-            //Lines seem to be fixed length,
-            //but we can push and shift to get a trail.
-            bodies[i].trail.geometry.vertices.shift();
-            bodies[i].trail.geometry.vertices.push(bodies[i].position.clone());
-            bodies[i].trail.geometry.verticesNeedUpdate = true;
-        }
-
+    function animate(){
+        move(bodies)
+        step++
         if (step % 1000 == 0){
             for (var i = 0; i < bodies.length; i++){
                 var v = bodies[i].velocity;
                 var p = bodies[i].position;
                 if (v.length() > 10 || p.length() > 10){
                     console.log(step);
-                    return false 
+                    reset(bodies, scene, solution);
                 }
             }
             console.log(step);
-        }
-        return true;
-    }
-
-    function animate(){
-        if (!move()){
-            reset(bodies, scene, solution);
         }
         requestAnimationFrame( animate );
         controls.update();
@@ -112,6 +87,27 @@ $(document).ready(function(){
         
     animate();
 });
+
+function move(bodies){
+    for (var i = 0; i < bodies.speed; i++){
+        rk4(bodies);
+    }
+    //recenter on the focussed body
+    if (bodies.currentFocus != -1){
+        var adjustment = bodies[bodies.currentFocus].position.clone();
+        for (var i = 0; i < bodies.length; i++){
+            bodies[i].position.sub(adjustment);
+        }
+    }
+
+    for (var i = 0; i < bodies.length; i++){
+        //Lines seem to be fixed length,
+        //but we can push and shift to get a trail.
+        bodies[i].trail.geometry.vertices.shift();
+        bodies[i].trail.geometry.vertices.push(bodies[i].position.clone());
+        bodies[i].trail.geometry.verticesNeedUpdate = true;
+    }
+}
 
 //https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods#Common_fourth-order_Runge.E2.80.93Kutta_method
 //http://home.deds.nl/~infokees/useful/OrbitRungeKutta4.pdf
