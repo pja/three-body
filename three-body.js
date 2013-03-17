@@ -1,4 +1,4 @@
-$(document).ready(function(){
+var Simulation = function(){
 
     //jquery selector for dom element we're going to render to
     var screen = "#screen";
@@ -86,7 +86,7 @@ $(document).ready(function(){
     }
         
     animate();
-});
+};
 
 function move(bodies){
     for (var i = 0; i < bodies.speed; i++){
@@ -246,5 +246,5 @@ function reset(bodies, scene, solution){
     bodies[2].position.y = 0;
 }
 
-
+$(Simulation);
 
