@@ -1,4 +1,7 @@
-var Simulation = function(){
+var Simulation = function(solution, focus){
+    console.log("Simulation: solution", solution, "focus", focus);
+    //solutions/starting positions available to simulate [0:14]
+    //focus determines which body the camera looks at, or center of mass
 
     //jquery selector for dom element we're going to render to
     var screen = "#screen";
@@ -9,92 +12,145 @@ var Simulation = function(){
     //size of display
     var w = $(screen).width();
     var h = $(screen).height();
-    var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(w,h);
-    $(screen).append( renderer.domElement );
-    //start with center of mass focus selected
-    $("#com").button('toggle');
+    this.renderer = new THREE.WebGLRenderer();
+    this.renderer.setSize(w,h);
+    $(screen).append( this.renderer.domElement );
 
-    var scene = new THREE.Scene();
+    this.scene = new THREE.Scene();
     //do I want perspective?
-    var camera = new THREE.PerspectiveCamera( 60, w/h, 0.1, 30 );
-    camera.position.z = 3;
-    camera.lookAt(new THREE.Vector3(0,0,0));
+    this.camera = new THREE.PerspectiveCamera( 60, w/h, 0.1, 30 );
+    this.camera.position.z = 3;
+    this.camera.lookAt(new THREE.Vector3(0,0,0));
 
     //Allows you to look around whilst focusing on a point
-    var controls = new THREE.OrbitControls( camera , $(screen)[0]);
-    controls.addEventListener('change', render);
+    this.controls = new THREE.OrbitControls( this.camera , $(screen)[0]);
+    this.controls.addEventListener('change', render);
 
     //light at the center of mass
-    var light = new THREE.PointLight( 0xffffff, 1, 10 );
-    light.position.set( 0, 0, 0 );
-    scene.add( light );
-    var light2 = new THREE.PointLight( 0xffffff, 0.6, 10 );
-    light2.position.set( 0, 0, 1 );
-    scene.add( light2 );
+    this.light = new THREE.PointLight( 0xffffff, 1, 10 );
+    this.light.position.set( 0, 0, 0 );
+    this.scene.add( this.light );
+    this.light2 = new THREE.PointLight( 0xffffff, 0.6, 10 );
+    this.light2.position.set( 0, 0, 1 );
+    this.scene.add( this.light2 );
 
-    //solutions/starting positions available to simulate
-    //[0:14]
-    var solution = 3;
+    var parentThis = this;
+    //resets the bodies to the starting positions and velocities given in
+    //the paper http://arxiv.org/pdf/1303.0181v1.pdf
+    //solution in [0:14]
+    this.reset = function(solution, focus){
+        console.log("reset: solution", solution, "focus", focus);
+        parentThis.bodies.dt = 0.001;
+        parentThis.bodies.speed = 5;
+        parentThis.bodies.focus = focus;
+        //numerical stability is governed by how close the parentThis.bodies come to each other during an orbit
+        //these are derived empically
+        var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,2000,2000];
+        parentThis.bodies.dt /= instability[solution];
+        parentThis.bodies.speed *= instability[solution];
+
+        //period of orbit from paper
+        var ts =     [6.2356,  7.0039, 63.5345, 14.8939, 28.6703, 13.8658, 25.8406, 10.4668, 79.4759,  21.2710, 55.5018, 17.3284, 10.9626, 55.7898, 54.2076 ];
+        var period = ts[solution];
+        //make the trails as long as the orbit
+        parentThis.bodies.segments = period / parentThis.bodies.dt/parentThis.bodies.speed ;
+
+        for (var i = 0; i < parentThis.bodies.length; i++){
+            parentThis.scene.remove(parentThis.bodies[i].trail);
+            parentThis.scene.remove(parentThis.bodies[i]);
+        }
+
+        //n = 3...
+        for (var i = 0; i < 3; i++){
+            //size and detail of spheres
+            var geometry = new THREE.SphereGeometry(0.1,16,16);
+            var material = new THREE.MeshPhongMaterial( { color: 0xff << (i*8)} );
+            var body = new THREE.Mesh( geometry, material );
+            body.velocity = new THREE.Vector3(0,0,0);
+
+            //trailing lines
+            var lineMaterial = new THREE.LineBasicMaterial({ color: body.material.color });
+            var lineGeometry = new THREE.Geometry();
+            for (var j = 0; j < parentThis.bodies.segments; j++){
+                //lines start at the initial positions of the spheres
+                lineGeometry.vertices.push(new THREE.Vector3([-1,1,0][i],0,0));
+            }
+            body.trail = new THREE.Line(lineGeometry, lineMaterial);
+            parentThis.bodies[i] = body;
+        }
+
+        for (var i = 0; i < parentThis.bodies.length; i++){
+            parentThis.scene.add(parentThis.bodies[i]);
+            parentThis.scene.add(parentThis.bodies[i].trail);
+        }
+
+        //The paper refers to the particles as 1,2,3
+        //I use 0,1,2
+        var x1dots = [0.30689, 0.39295, 0.18428, 0.46444, 0.43917, 0.40592, 0.38344, 0.08330, 0.350112, 0.08058, 0.55906, 0.51394, 0.28270, 0.41682, 0.41734];
+        var y1dots = [0.12551, 0.09758, 0.58719, 0.39606, 0.45297, 0.23016, 0.37736, 0.12789, 0.079340, 0.58884, 0.34919, 0.30474, 0.32721, 0.33033, 0.31310];
+
+        var x1dot = x1dots[solution];
+        var y1dot = y1dots[solution];
+
+        parentThis.bodies[0].velocity.x = x1dot;
+        parentThis.bodies[1].velocity.x = x1dot;
+        parentThis.bodies[2].velocity.x = -2*x1dot;
+
+        parentThis.bodies[0].velocity.y = y1dot;
+        parentThis.bodies[1].velocity.y = y1dot;
+        parentThis.bodies[2].velocity.y = -2*y1dot;
+
+        parentThis.bodies[0].position.x = -1;
+        parentThis.bodies[1].position.x = 1;
+        parentThis.bodies[2].position.x = 0;
+
+        parentThis.bodies[0].position.y = 0;
+        parentThis.bodies[1].position.y = 0;
+        parentThis.bodies[2].position.y = 0;
+    }
 
     //array of spheres, carries other information like
     //time-step size, trail length
-    var bodies = [];
-    reset(bodies, scene, solution);
+    this.bodies = [];
+    this.reset(solution, focus);
 
     //simulation parameters
-    var step = 0;
-
-    //bind function to dropdown menu for solution selection
-    $("#simulationSelection").click(function(x){ 
-        solution = x.target.id;
-        reset(bodies, scene, solution);
-    });
-
-    bodies.currentFocus = -1;
-    //focus point function
-    $("#focusRadio").click(function(x){ 
-        var newFocus = x.target.value;
-        if (bodies.currentFocus != newFocus){
-            bodies.currentFocus = newFocus;
-            reset(bodies, scene, solution);
-        }
-    });
-
+    this.step = 0;
 
     function animate(){
-        move(bodies)
-        step++
-        if (step % 1000 == 0){
-            for (var i = 0; i < bodies.length; i++){
-                var v = bodies[i].velocity;
-                var p = bodies[i].position;
+        move(parentThis.bodies)
+        parentThis.step++
+        if (parentThis.step % 100== 0){
+            for (var i = 0; i < parentThis.bodies.length; i++){
+                var v = parentThis.bodies[i].velocity;
+                var p = parentThis.bodies[i].position;
                 if (v.length() > 10 || p.length() > 10){
-                    console.log(step);
-                    reset(bodies, scene, solution);
+                    console.log(parentThis.step);
+                    parentThis.reset(solution, parentThis.bodies.focus);
                 }
             }
-            console.log(step);
+            console.log(parentThis.step);
         }
         requestAnimationFrame( animate );
-        controls.update();
-        renderer.render( scene, camera );
+        parentThis.controls.update();
+        parentThis.renderer.render( parentThis.scene, parentThis.camera );
     }
 
     function render(){
-        renderer.render( scene, camera );
+        parentThis.renderer.render( parentThis.scene, parentThis.camera );
     }
         
     animate();
 };
+
 
 function move(bodies){
     for (var i = 0; i < bodies.speed; i++){
         rk4(bodies);
     }
     //recenter on the focussed body
-    if (bodies.currentFocus != -1){
-        var adjustment = bodies[bodies.currentFocus].position.clone();
+    if (bodies.focus!= -1){
+        var adjustment = bodies[bodies.focus].position.clone();
         for (var i = 0; i < bodies.length; i++){
             bodies[i].position.sub(adjustment);
         }
@@ -174,77 +230,28 @@ function a(i, p, bodies){
     return sum;
 }
 
-//resets the bodies to the starting positions and velocities given in
-//the paper http://arxiv.org/pdf/1303.0181v1.pdf
-//solution in [0:14]
-function reset(bodies, scene, solution){
-    bodies.dt = 0.001;
-    bodies.speed = 5;
-    //numerical stability is governed by how close the bodies come to each other during an orbit
-    //these are derived empically
-    var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,2000,2000];
-    bodies.dt /= instability[solution];
-    bodies.speed *= instability[solution];
+$(function(){
+    var s = new Simulation(3, -1);
+    //bind function to dropdown menu for solution selection
+    $("#simulationSelection").click(function(x){ 
+        var focus = $(".active").val();
+        var solution = x.target.id;
+        s.reset(solution, focus);
+        $("#simulationSelection").children().children().css("color", "");
+        $("#"+solution).css("color", "red");
+        $("#"+solution).addClass("chosen");
+    });
 
-    //period of orbit from paper
-    var ts =     [6.2356,  7.0039, 63.5345, 14.8939, 28.6703, 13.8658, 25.8406, 10.4668, 79.4759,  21.2710, 55.5018, 17.3284, 10.9626, 55.7898, 54.2076 ];
-    var period = ts[solution];
-    //make the trails as long as the orbit
-    bodies.segments = period / bodies.dt/bodies.speed ;
+    //focus point function
+    $("#focusRadio").click(function(x){ 
+        var newFocus = x.target.value;
+        var solution = $(".chosen").attr("id");
+        console.log(solution);
+        s.reset(solution, newFocus);
+    });
 
-    for (var i = 0; i < bodies.length; i++){
-        scene.remove(bodies[i].trail);
-        scene.remove(bodies[i]);
-    }
-
-    //n = 3...
-    for (var i = 0; i < 3; i++){
-        //size and detail of spheres
-        var geometry = new THREE.SphereGeometry(0.1,16,16);
-        var material = new THREE.MeshPhongMaterial( { color: 0xff << (i*8)} );
-        var body = new THREE.Mesh( geometry, material );
-        body.velocity = new THREE.Vector3(0,0,0);
-
-        //trailing lines
-        var lineMaterial = new THREE.LineBasicMaterial({ color: body.material.color });
-        var lineGeometry = new THREE.Geometry();
-        for (var j = 0; j < bodies.segments; j++){
-            //lines start at the initial positions of the spheres
-            lineGeometry.vertices.push(new THREE.Vector3([-1,1,0][i],0,0));
-        }
-        body.trail = new THREE.Line(lineGeometry, lineMaterial);
-        bodies[i] = body;
-    }
-
-    for (var i = 0; i < bodies.length; i++){
-        scene.add(bodies[i]);
-        scene.add(bodies[i].trail);
-    }
-
-    //The paper refers to the particles as 1,2,3
-    //I use 0,1,2
-    var x1dots = [0.30689, 0.39295, 0.18428, 0.46444, 0.43917, 0.40592, 0.38344, 0.08330, 0.350112, 0.08058, 0.55906, 0.51394, 0.28270, 0.41682, 0.41734];
-    var y1dots = [0.12551, 0.09758, 0.58719, 0.39606, 0.45297, 0.23016, 0.37736, 0.12789, 0.079340, 0.58884, 0.34919, 0.30474, 0.32721, 0.33033, 0.31310];
-
-    var x1dot = x1dots[solution];
-    var y1dot = y1dots[solution];
-
-    bodies[0].velocity.x = x1dot;
-    bodies[1].velocity.x = x1dot;
-    bodies[2].velocity.x = -2*x1dot;
-
-    bodies[0].velocity.y = y1dot;
-    bodies[1].velocity.y = y1dot;
-    bodies[2].velocity.y = -2*y1dot;
-
-    bodies[0].position.x = -1;
-    bodies[1].position.x = 1;
-    bodies[2].position.x = 0;
-
-    bodies[0].position.y = 0;
-    bodies[1].position.y = 0;
-    bodies[2].position.y = 0;
-}
-
-$(Simulation);
+    //start with center of mass focus selected
+    $("#com").button('toggle');
+    $("#3").addClass("chosen");
+});
 
