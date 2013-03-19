@@ -234,24 +234,28 @@ $(function(){
     var s = new Simulation(3, -1);
     //bind function to dropdown menu for solution selection
     $("#simulationSelection").click(function(x){ 
-        var focus = $(".active").val();
+        var focus = $(".selectedFocus").val();
         var solution = x.target.id;
         s.reset(solution, focus);
         $("#simulationSelection").children().children().css("color", "");
         $("#"+solution).css("color", "red");
-        $("#"+solution).addClass("chosen");
+        $(".selectedSim").removeClass("selectedSim");
+        $("#"+solution).addClass("selectedSim");
     });
 
     //focus point function
     $("#focusRadio").click(function(x){ 
         var newFocus = x.target.value;
-        var solution = $(".chosen").attr("id");
+        var solution = $(".selectedSim").attr("id");
         console.log(solution);
         s.reset(solution, newFocus);
+        $(".selectedFocus").removeClass("selectedFocus");
+        $(x.target).addClass("selectedFocus");
     });
 
     //start with center of mass focus selected
     $("#com").button('toggle');
-    $("#3").addClass("chosen");
+    $("#com").addClass('selectedFocus');
+    $("#3").addClass("selectedSim");
 });
 
