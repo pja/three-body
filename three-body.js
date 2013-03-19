@@ -233,29 +233,26 @@ function a(i, p, bodies){
 $(function(){
     var s = new Simulation(3, -1);
     //bind function to dropdown menu for solution selection
-    $("#simulationSelection").click(function(x){ 
-        var focus = $(".selectedFocus").val();
-        var solution = x.target.id;
+    $("#solution").click(function(x){ 
+        var focus = $("#focus .selected").val();
+        var solution = $("#"+x.target.id).parent().val();
         s.reset(solution, focus);
-        $("#simulationSelection").children().children().css("color", "");
-        $("#"+solution).css("color", "red");
-        $(".selectedSim").removeClass("selectedSim");
-        $("#"+solution).addClass("selectedSim");
+        $("#solution .selected").removeClass("selected");
+        $("#solution"+solution).addClass("selected");
     });
 
     //focus point function
-    $("#focusRadio").click(function(x){ 
-        var newFocus = x.target.value;
-        var solution = $(".selectedSim").attr("id");
-        console.log(solution);
-        s.reset(solution, newFocus);
-        $(".selectedFocus").removeClass("selectedFocus");
-        $(x.target).addClass("selectedFocus");
+    $("#focus").click(function(x){ 
+        var focus = x.target.value;
+        var solution = $("#solution .selected").parent().val();
+        s.reset(solution, focus);
+        $("#focus .selected").removeClass("selected");
+        $("#"+x.target.id).addClass("selected");
     });
 
     //start with center of mass focus selected
     $("#com").button('toggle');
-    $("#com").addClass('selectedFocus');
-    $("#3").addClass("selectedSim");
+    $("#com").addClass('selected');
+    $("#solution3").addClass("selected");
 });
 
