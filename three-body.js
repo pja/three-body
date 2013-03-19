@@ -37,6 +37,13 @@ var Simulation = function(solution, focus){
     this.light2.position.set( 0, 0, 1 );
     this.scene.add( this.light2 );
 
+    //initial positions depending on focus
+    var adjustment = [0,1,-1,0];
+    var init_pos = [-1,1,0];
+    for (var i = 0; i < init_pos.length; i++){
+        init_pos[i] += adjustment;
+    }
+
     //resets the bodies to the starting positions and velocities given in
     //the paper http://arxiv.org/pdf/1303.0181v1.pdf
     //solution in [0:14]
@@ -75,7 +82,7 @@ var Simulation = function(solution, focus){
             var lineGeometry = new THREE.Geometry();
             for (var j = 0; j < sim.bodies.segments; j++){
                 //lines start at the initial positions of the spheres
-                lineGeometry.vertices.push(new THREE.Vector3([-1,1,0][i],0,0));
+                lineGeometry.vertices.push(new THREE.Vector3(init_pos[i],0,0));
             }
             body.trail = new THREE.Line(lineGeometry, lineMaterial);
             sim.bodies[i] = body;
