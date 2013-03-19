@@ -49,9 +49,11 @@ var Simulation = function(solution, focus){
     //solution in [0:14]
     this.reset = function(solution, focus){
         console.log("reset: solution", solution, "focus", focus);
+        sim.solution = solution;
+        sim.focus = focus; 
+
         sim.bodies.dt = 0.001;
         sim.bodies.speed = 5;
-        sim.bodies.focus = focus;
         //numerical stability is governed by how close the sim.bodies come to each other during an orbit
         //these are derived empically
         var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,100,100];
@@ -126,7 +128,7 @@ var Simulation = function(solution, focus){
     var step = 0;
 
     function animate(){
-        move(sim.bodies)
+        move(sim.bodies, sim.focus)
         step++
         if (step % 100== 0){
             for (var i = 0; i < sim.bodies.length; i++){
@@ -134,7 +136,7 @@ var Simulation = function(solution, focus){
                 var p = sim.bodies[i].position;
                 if (v.length() > 10 || p.length() > 10){
                     console.log(step);
-                    sim.reset(solution, sim.bodies.focus);
+                    sim.reset(sim.solution, sim.focus);
                 }
             }
             console.log(step);
@@ -152,13 +154,13 @@ var Simulation = function(solution, focus){
 };
 
 
-function move(bodies){
+function move(bodies, focus){
     for (var i = 0; i < bodies.speed; i++){
         rk4(bodies);
     }
     //recenter on the focussed body
-    if (bodies.focus!= -1){
-        var adjustment = bodies[bodies.focus].position.clone();
+    if (focus!= -1){
+        var adjustment = bodies[focus].position.clone();
         for (var i = 0; i < bodies.length; i++){
             bodies[i].position.sub(adjustment);
         }
