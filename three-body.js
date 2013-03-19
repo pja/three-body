@@ -52,23 +52,24 @@ var Simulation = function(solution, focus){
         sim.solution = solution;
         sim.focus = focus; 
 
-        sim.bodies.dt = 0.001;
-        sim.bodies.speed = 5;
-        //numerical stability is governed by how close the sim.bodies come to each other during an orbit
+        var b = sim.bodies;
+        b.dt = 0.001;
+        b.speed = 5;
+        //numerical stability is governed by how close the b come to each other during an orbit
         //these are derived empically
         var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,100,100];
-        sim.bodies.dt /= instability[solution];
-        sim.bodies.speed *= instability[solution];
+        b.dt /= instability[solution];
+        b.speed *= instability[solution];
 
         //period of orbit from paper
         var ts =     [6.2356,  7.0039, 63.5345, 14.8939, 28.6703, 13.8658, 25.8406, 10.4668, 79.4759,  21.2710, 55.5018, 17.3284, 10.9626, 55.7898, 54.2076 ];
         var period = ts[solution];
         //make the trails as long as the orbit
-        sim.bodies.segments = period / sim.bodies.dt/sim.bodies.speed ;
+        b.segments = period / b.dt/b.speed ;
 
-        for (var i = 0; i < sim.bodies.length; i++){
-            sim.scene.remove(sim.bodies[i].trail);
-            sim.scene.remove(sim.bodies[i]);
+        for (var i = 0; i < b.length; i++){
+            sim.scene.remove(b[i].trail);
+            sim.scene.remove(b[i]);
         }
 
         //n = 3...
@@ -82,17 +83,17 @@ var Simulation = function(solution, focus){
             //trailing lines
             var lineMaterial = new THREE.LineBasicMaterial({ color: body.material.color });
             var lineGeometry = new THREE.Geometry();
-            for (var j = 0; j < sim.bodies.segments; j++){
+            for (var j = 0; j < b.segments; j++){
                 //lines start at the initial positions of the spheres
                 lineGeometry.vertices.push(new THREE.Vector3(init_pos[i],0,0));
             }
             body.trail = new THREE.Line(lineGeometry, lineMaterial);
-            sim.bodies[i] = body;
+            b[i] = body;
         }
 
-        for (var i = 0; i < sim.bodies.length; i++){
-            sim.scene.add(sim.bodies[i]);
-            sim.scene.add(sim.bodies[i].trail);
+        for (var i = 0; i < b.length; i++){
+            sim.scene.add(b[i]);
+            sim.scene.add(b[i].trail);
         }
 
         //The paper refers to the particles as 1,2,3
@@ -103,21 +104,21 @@ var Simulation = function(solution, focus){
         var x1dot = x1dots[solution];
         var y1dot = y1dots[solution];
 
-        sim.bodies[0].velocity.x = x1dot;
-        sim.bodies[1].velocity.x = x1dot;
-        sim.bodies[2].velocity.x = -2*x1dot;
+        b[0].velocity.x = x1dot;
+        b[1].velocity.x = x1dot;
+        b[2].velocity.x = -2*x1dot;
 
-        sim.bodies[0].velocity.y = y1dot;
-        sim.bodies[1].velocity.y = y1dot;
-        sim.bodies[2].velocity.y = -2*y1dot;
+        b[0].velocity.y = y1dot;
+        b[1].velocity.y = y1dot;
+        b[2].velocity.y = -2*y1dot;
 
-        sim.bodies[0].position.x = -1;
-        sim.bodies[1].position.x = 1;
-        sim.bodies[2].position.x = 0;
+        b[0].position.x = -1;
+        b[1].position.x = 1;
+        b[2].position.x = 0;
 
-        sim.bodies[0].position.y = 0;
-        sim.bodies[1].position.y = 0;
-        sim.bodies[2].position.y = 0;
+        b[0].position.y = 0;
+        b[1].position.y = 0;
+        b[2].position.y = 0;
     }
 
     //array of spheres, carries other information like
