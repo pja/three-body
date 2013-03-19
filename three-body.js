@@ -123,22 +123,21 @@ var Simulation = function(solution, focus){
     this.bodies = [];
     this.reset(solution, focus);
 
-    //simulation parameters
-    this.step = 0;
+    var step = 0;
 
     function animate(){
         move(sim.bodies)
-        sim.step++
-        if (sim.step % 100== 0){
+        step++
+        if (step % 100== 0){
             for (var i = 0; i < sim.bodies.length; i++){
                 var v = sim.bodies[i].velocity;
                 var p = sim.bodies[i].position;
                 if (v.length() > 10 || p.length() > 10){
-                    console.log(sim.step);
+                    console.log(step);
                     sim.reset(solution, sim.bodies.focus);
                 }
             }
-            console.log(sim.step);
+            console.log(step);
         }
         requestAnimationFrame( animate );
         sim.controls.update();
