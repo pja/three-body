@@ -1,7 +1,10 @@
 var Simulation = function(solution, focus){
-    console.log("Simulation: solution", solution, "focus", focus);
     //solutions/starting positions available to simulate [0:14]
     //focus determines which body the camera looks at, or center of mass
+    console.log("Simulation: solution", solution, "focus", focus);
+
+    //for referencing inside inline functions
+    var sim = this;
 
     //jquery selector for dom element we're going to render to
     var screen = "#screen";
@@ -34,30 +37,29 @@ var Simulation = function(solution, focus){
     this.light2.position.set( 0, 0, 1 );
     this.scene.add( this.light2 );
 
-    var parentThis = this;
     //resets the bodies to the starting positions and velocities given in
     //the paper http://arxiv.org/pdf/1303.0181v1.pdf
     //solution in [0:14]
     this.reset = function(solution, focus){
         console.log("reset: solution", solution, "focus", focus);
-        parentThis.bodies.dt = 0.001;
-        parentThis.bodies.speed = 5;
-        parentThis.bodies.focus = focus;
-        //numerical stability is governed by how close the parentThis.bodies come to each other during an orbit
+        sim.bodies.dt = 0.001;
+        sim.bodies.speed = 5;
+        sim.bodies.focus = focus;
+        //numerical stability is governed by how close the sim.bodies come to each other during an orbit
         //these are derived empically
         var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,2000,2000];
-        parentThis.bodies.dt /= instability[solution];
-        parentThis.bodies.speed *= instability[solution];
+        sim.bodies.dt /= instability[solution];
+        sim.bodies.speed *= instability[solution];
 
         //period of orbit from paper
         var ts =     [6.2356,  7.0039, 63.5345, 14.8939, 28.6703, 13.8658, 25.8406, 10.4668, 79.4759,  21.2710, 55.5018, 17.3284, 10.9626, 55.7898, 54.2076 ];
         var period = ts[solution];
         //make the trails as long as the orbit
-        parentThis.bodies.segments = period / parentThis.bodies.dt/parentThis.bodies.speed ;
+        sim.bodies.segments = period / sim.bodies.dt/sim.bodies.speed ;
 
-        for (var i = 0; i < parentThis.bodies.length; i++){
-            parentThis.scene.remove(parentThis.bodies[i].trail);
-            parentThis.scene.remove(parentThis.bodies[i]);
+        for (var i = 0; i < sim.bodies.length; i++){
+            sim.scene.remove(sim.bodies[i].trail);
+            sim.scene.remove(sim.bodies[i]);
         }
 
         //n = 3...
@@ -71,17 +73,17 @@ var Simulation = function(solution, focus){
             //trailing lines
             var lineMaterial = new THREE.LineBasicMaterial({ color: body.material.color });
             var lineGeometry = new THREE.Geometry();
-            for (var j = 0; j < parentThis.bodies.segments; j++){
+            for (var j = 0; j < sim.bodies.segments; j++){
                 //lines start at the initial positions of the spheres
                 lineGeometry.vertices.push(new THREE.Vector3([-1,1,0][i],0,0));
             }
             body.trail = new THREE.Line(lineGeometry, lineMaterial);
-            parentThis.bodies[i] = body;
+            sim.bodies[i] = body;
         }
 
-        for (var i = 0; i < parentThis.bodies.length; i++){
-            parentThis.scene.add(parentThis.bodies[i]);
-            parentThis.scene.add(parentThis.bodies[i].trail);
+        for (var i = 0; i < sim.bodies.length; i++){
+            sim.scene.add(sim.bodies[i]);
+            sim.scene.add(sim.bodies[i].trail);
         }
 
         //The paper refers to the particles as 1,2,3
@@ -92,21 +94,21 @@ var Simulation = function(solution, focus){
         var x1dot = x1dots[solution];
         var y1dot = y1dots[solution];
 
-        parentThis.bodies[0].velocity.x = x1dot;
-        parentThis.bodies[1].velocity.x = x1dot;
-        parentThis.bodies[2].velocity.x = -2*x1dot;
+        sim.bodies[0].velocity.x = x1dot;
+        sim.bodies[1].velocity.x = x1dot;
+        sim.bodies[2].velocity.x = -2*x1dot;
 
-        parentThis.bodies[0].velocity.y = y1dot;
-        parentThis.bodies[1].velocity.y = y1dot;
-        parentThis.bodies[2].velocity.y = -2*y1dot;
+        sim.bodies[0].velocity.y = y1dot;
+        sim.bodies[1].velocity.y = y1dot;
+        sim.bodies[2].velocity.y = -2*y1dot;
 
-        parentThis.bodies[0].position.x = -1;
-        parentThis.bodies[1].position.x = 1;
-        parentThis.bodies[2].position.x = 0;
+        sim.bodies[0].position.x = -1;
+        sim.bodies[1].position.x = 1;
+        sim.bodies[2].position.x = 0;
 
-        parentThis.bodies[0].position.y = 0;
-        parentThis.bodies[1].position.y = 0;
-        parentThis.bodies[2].position.y = 0;
+        sim.bodies[0].position.y = 0;
+        sim.bodies[1].position.y = 0;
+        sim.bodies[2].position.y = 0;
     }
 
     //array of spheres, carries other information like
@@ -118,26 +120,26 @@ var Simulation = function(solution, focus){
     this.step = 0;
 
     function animate(){
-        move(parentThis.bodies)
-        parentThis.step++
-        if (parentThis.step % 100== 0){
-            for (var i = 0; i < parentThis.bodies.length; i++){
-                var v = parentThis.bodies[i].velocity;
-                var p = parentThis.bodies[i].position;
+        move(sim.bodies)
+        sim.step++
+        if (sim.step % 100== 0){
+            for (var i = 0; i < sim.bodies.length; i++){
+                var v = sim.bodies[i].velocity;
+                var p = sim.bodies[i].position;
                 if (v.length() > 10 || p.length() > 10){
-                    console.log(parentThis.step);
-                    parentThis.reset(solution, parentThis.bodies.focus);
+                    console.log(sim.step);
+                    sim.reset(solution, sim.bodies.focus);
                 }
             }
-            console.log(parentThis.step);
+            console.log(sim.step);
         }
         requestAnimationFrame( animate );
-        parentThis.controls.update();
-        parentThis.renderer.render( parentThis.scene, parentThis.camera );
+        sim.controls.update();
+        sim.renderer.render( sim.scene, sim.camera );
     }
 
     function render(){
-        parentThis.renderer.render( parentThis.scene, parentThis.camera );
+        sim.renderer.render( sim.scene, sim.camera );
     }
         
     animate();
