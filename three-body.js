@@ -54,7 +54,7 @@ var Simulation = function(solution, focus){
         sim.bodies.focus = focus;
         //numerical stability is governed by how close the sim.bodies come to each other during an orbit
         //these are derived empically
-        var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,2000,2000];
+        var instability = [10,20,10,1,2,10,20,20,50,20,100,10,10,100,100];
         sim.bodies.dt /= instability[solution];
         sim.bodies.speed *= instability[solution];
 
