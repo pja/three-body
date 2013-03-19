@@ -233,8 +233,10 @@ function a(i, p, bodies){
 $(function(){
     var s = new Simulation(3, -1);
     //bind function to dropdown menu for solution selection
+    //the dropdown items are <li><a>, where the <a> receives the event
+    //and the <li> must handle the css
     $("#solution").click(function(x){ 
-        var focus = $("#focus .selected").val();
+        var focus = $("#focus .selected").parent().val();
         var solution = $("#"+x.target.id).parent().val();
         s.reset(solution, focus);
         $("#solution .selected").removeClass("selected");
@@ -243,16 +245,15 @@ $(function(){
 
     //focus point function
     $("#focus").click(function(x){ 
-        var focus = x.target.value;
+        var focus = $("#"+x.target.id).parent().val();
         var solution = $("#solution .selected").parent().val();
         s.reset(solution, focus);
         $("#focus .selected").removeClass("selected");
-        $("#"+x.target.id).addClass("selected");
+        $("#focus *[value=\""+focus+"\"]").children().addClass("selected");
     });
 
     //start with center of mass focus selected
-    $("#com").button('toggle');
-    $("#com").addClass('selected');
+    $("#focus0").addClass('selected');
     $("#solution3").addClass("selected");
 });
 
